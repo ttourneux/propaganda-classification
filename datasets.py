@@ -48,7 +48,8 @@ everythingDf
 
 # In[11]:
 
-
+everythingDf = everythingDf.fillna(0)
+#
 nonTwitterDf = everythingDf.loc[everythingDf['Content_Category']!='tweet',:]
 nonTwitterDf = nonTwitterDf.loc[nonTwitterDf['Content_Category']!='retweet',:]
 len(nonTwitterDf)
