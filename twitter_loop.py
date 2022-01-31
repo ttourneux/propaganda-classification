@@ -46,8 +46,8 @@ def twitter_loop():
         trained_model = functions.model_training(model,X_train, Y_train, param_grid)
         filename = functions.save_model(trained_model,name,data_name)
         loaded_model = functions.scorer(filename, X_test, Y_test)
-        functions.graph_MDI_importance(X_train,Y_train,loaded_model,name, data_name)
-        functions.show_permutation_feature_importance(loaded_model, X_train, Y_train, name, data_name)
+        #functions.graph_MDI_importance(X_train,Y_train,loaded_model,name, data_name)
+        #functions.show_permutation_feature_importance(loaded_model, X_train, Y_train, name, data_name)
         print(name + ': Done!')
 
     
