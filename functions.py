@@ -85,7 +85,7 @@ def balance_data(data):
 # In[3]:
 
 def choose_model(name):
-    granularity = 10
+    granularity = 1
     if name =="support vector machine" or name == 'SVM':
 
         model = SVC(gamma='auto') 
