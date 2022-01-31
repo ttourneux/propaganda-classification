@@ -14,6 +14,7 @@ import sklearn as skl
 import io
 import pickle
 import json
+import seaborn as sns
 
 from pandas import read_csv
 from pandas.plotting import scatter_matrix
@@ -90,7 +91,7 @@ def choose_model(name):
         model = SVC(gamma='auto') 
         param_grid = { 
             'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
-            'C' : list(range(1,30))}
+            'C' : list(range(1,30, granularity))}
     elif name == 'extra trees':
         model = ExtraTreesClassifier()   
         param_grid = {
@@ -104,7 +105,7 @@ def choose_model(name):
             'random_state': list(range(10,100,granularity))}
 
     elif name == 'lasso':
-        model = linear_model.Lasso()
+        model = Lasso()
         param_grid={ 
             'alpha' : list(np.arange (.1, 50, .1))}
     elif name == 'neural net' or name == 'NN':
@@ -143,7 +144,7 @@ def save_model(model,name, data_name):
 
 
 def scorer(filename, X_test, Y_test ): 
-    loaded_model = pickle.load(open(filename, 'rb'))
+    loaded_model = pickle.load(open("trained_models/"+filename, 'rb'))
     print(filename+" results on test data")
     print("roc_auc:",roc_auc_score(Y_test,loaded_model.predict(X_test)))
     print("accurarcy:",accuracy_score(Y_test,loaded_model.predict(X_test)))
@@ -281,7 +282,7 @@ def barchart(data, data_name):
     names= []
     trump = []
     hillary = []
-    for i in all_data_df.columns[6:-2]:
+    for i in data.columns[6:-2]:
         
         #print(i)
         names.append(i)
@@ -316,7 +317,7 @@ def barchart(data, data_name):
 
 def boxplotting(data):
     data = data.replace(0,np.nan)
-    df1 =pd.melt(df0, id_vars = ["BCandidate", "Content_Category"], var_name = "propaganda techinique",
+    df1 =pd.melt(data, id_vars = ["BCandidate", "Content_Category"], var_name = "propaganda techinique",
         value_name = "times used")
     sns.boxplot ( data = df1, x ="propaganda techinique", y = "times used", hue = "BCandidate")
     plt.xticks(rotation = 90)

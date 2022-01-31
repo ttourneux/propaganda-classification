@@ -130,9 +130,7 @@
    "id": "bf70c581",
    "metadata": {},
    "outputs": [],
-   "source": [
-    "#functions.barchart(data, data_name)"
-   ]
+   "source": []
   },
   {
    "cell_type": "code",
@@ -140,9 +138,7 @@
    "id": "5f822ade",
    "metadata": {},
    "outputs": [],
-   "source": [
-    "#boxplotting(data)"
-   ]
+   "source": []
   }
  ],
  "metadata": {
