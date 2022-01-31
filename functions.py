@@ -124,8 +124,7 @@ def choose_model(name):
 
 def model_training (model, X_train,Y_train,param_grid): 
     CVM = GridSearchCV(
-        model, param_grid = param_grid
-        )
+        model, param_grid = param_grid,n_jobs = -1)
 
     CVM.fit(X_train,Y_train)
     return CVM
