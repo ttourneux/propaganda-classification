@@ -4,7 +4,7 @@
 # In[1]:
 
 
-get_ipython().system('python functions.py')
+#get_ipython().system('python functions.py')
 ## note after making changes,kernel must be restarted for changes to apply 
 
 
