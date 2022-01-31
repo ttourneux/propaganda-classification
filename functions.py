@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import sklearn as skl
 import io
 import pickle
+import json
 
 from pandas import read_csv
 from pandas.plotting import scatter_matrix
@@ -134,7 +135,7 @@ def model_training (model, X_train,Y_train,param_grid):
 
 def save_model(model,name, data_name):
     filename = name+'_GS_'+data_name
-    pickle.dump(model, open(filename, 'wb'))
+    pickle.dump(model, open("trained_models/"+filename, 'wb'))
     return filename
 
 
@@ -149,20 +150,29 @@ def scorer(filename, X_test, Y_test ):
     print("note 1 is Donald Trump")
     cm = confusion_matrix(Y_test,loaded_model.predict(X_test))
     ConfusionMatrixDisplay(cm).plot()
+    
+    json_ptr = open("scores/scores.json")
+    scores = json.load(json_ptr)
+    scores["roc_auc"] = roc_auc_score(Y_test,loaded_model.predict(X_test))
+    scores["accurarcy"] = accuracy_score(Y_test,loaded_model.predict(X_test))
+    
+    json_ptr = open("scores/"+filename+".json", 'w')
+    json.dump(scores, json_ptr)
+    json_ptr.close()
     return loaded_model
 
 
 # In[7]:
 
 
-def graph_MDI_importance(X_train,Y_train,loaded_model,name): 
+def graph_MDI_importance(X_train,Y_train,loaded_model,name, data_name): 
     
     if name == "extra trees":
         MOD = ExtraTreesClassifier(n_estimators =loaded_model.best_params_['n_estimators'],random_state = loaded_model.best_params_['random_state'] )
     elif name == "random forest":
-        MOD = GridSearchCV(RandomForestClassifier(n_estimators =loaded_model.best_params_['n_estimators'],
+        MOD = RandomForestClassifier(n_estimators =loaded_model.best_params_['n_estimators'],
                                                   random_state = loaded_model.best_params_['random_state'],
-                                                  max_depth = loaded_model.best_params_['max_depth']))
+                                                  max_depth = loaded_model.best_params_['max_depth'])
     else:
         print("there is a problem with name param")
         return
@@ -192,13 +202,19 @@ def graph_MDI_importance(X_train,Y_train,loaded_model,name):
            color="r", yerr=std[indices], align="center")
     plt.xticks(range(X_train.shape[1]), ff[indices], rotation=90)
     plt.xlim([-1, X_train.shape[1]])
+    
+    pic_name = name+'_MDI_importance_'+data_name+".png"
+    plt.savefig(pic_name, format="png")
+    
     plt.show()
+
+    
 
 
 # In[8]:
 
 
-def show_permutation_feature_importance(loaded_model,X_train, Y_train, name):
+def show_permutation_feature_importance(loaded_model,X_train, Y_train, name, data_name):
     if not (name == 'random forest') and not (name == 'extra trees'): 
         print(' importance not available or name param is wrong')
         print('name:', name)
@@ -208,9 +224,9 @@ def show_permutation_feature_importance(loaded_model,X_train, Y_train, name):
         MOD = ExtraTreesClassifier(n_estimators =loaded_model.best_params_['n_estimators'],
                                    random_state = loaded_model.best_params_['random_state'] )
     elif name == "random forest":
-        MOD = GridSearchCV(RandomForestClassifier(n_estimators =loaded_model.best_params_['n_estimators'],
+        MOD = RandomForestClassifier(n_estimators =loaded_model.best_params_['n_estimators'],
                                                   random_state = loaded_model.best_params_['random_state'],
-                                                  max_depth = loaded_model.best_params_['max_depth']))
+                                                  max_depth = loaded_model.best_params_['max_depth'])
     else:
         print("there is a problem with name param")
         return
@@ -219,21 +235,21 @@ def show_permutation_feature_importance(loaded_model,X_train, Y_train, name):
     MOD.fit(X_train,Y_train)
     scoring = ['roc_auc', 'accuracy']#
     r_multi = permutation_importance(
-        MOD, X_test, Y_test, n_repeats=30, random_state=0, scoring=scoring)## n_repeats should be bigger
+        MOD, X_train, Y_train, n_repeats=30, random_state=0, scoring=scoring)## n_repeats should be bigger
 
-    features= list(twitter.columns)[6:-2]
+    features= list(X_train.columns)
     roc_auc_importance = []
     roc_auc_std = []
     acc_importance =[]
     acc_std=[]
     for metric in r_multi:
-        print(f"{metric}")
+        #print(f"{metric}")
         r = r_multi[metric]
         for i in range(len(features)):
             #if r.importances_mean[i] - 2 * r.importances_std[i] > 0: ## do we want to know this?
-            print(i,f"    {list(twitter.columns)[6:-2][i]:<8}"
-                  f"{r.importances_mean[i]:.3f}"
-                  f" +/- {r.importances_std[i]:.3f}")
+            #print(i,f"    {list(X_train.columns)[i]:<8}"
+            #      f"{r.importances_mean[i]:.3f}"
+            #      f" +/- {r.importances_std[i]:.3f}")
             if metric == 'roc_auc':
                 roc_auc_importance.append(r.importances_mean[i])
                 roc_auc_std.append(r.importances_std[i])
@@ -247,153 +263,67 @@ def show_permutation_feature_importance(loaded_model,X_train, Y_train, name):
 
     plt.figure(figsize=(15, 4))# this adjusts how far away the plots are from eachother
 
-    ax = plt.subplot(221)
+    ax = plt.subplot(111)
 
     acc_importance_df = acc_importance_df.sort_values(by = 'acc_importance')
     acc_importance_df.plot(x = 'features', y ='acc_importance', kind = 'bar',ax = ax)
     plt.xticks(rotation = 'vertical')
-    ax.set_title("Feature importance of Random Forest based on accuracy")
+    ax.set_title("Feature importance of"+name+" based on accuracy")
     ax.set_ylabel("permutation importance")
 
-    ax = plt.subplot(222)
-    acc_importance_df = acc_importance_df.sort_values(by = 'roc_auc_importance')
-    acc_importance_df.plot(x = 'features', y ='roc_auc_importance', kind = 'bar', ax =ax)
-    plt.xticks(rotation = 'vertical')
-    ax.set_title("Feature importance of Random Forest based on roc_auc")
-    ax.set_ylabel("permutation importance")   
-    
-    ax = plt.subplot(223)
-    roc_df.plot(kind = "box",ax =ax)
-    plt.xticks(rotation = 'vertical')
-    ax.set_title("Feature importance of Random")
 
-
-# In[ ]:
-
-
-## inital code: 
-
-'''
-ax = plt.subplot(223)
-roc_df.plot(kind = "box",ax =ax)
-plt.xticks(rotation = 'vertical')
-ax.set_title("Feature importance of Random")
-
-
-acc_importance_df = acc_importance_df.sort_values(by = 'acc_importance')
-    acc_importance_df.plot(x = 'features', y ='acc_importance', kind = 'bar',ax = ax)
-    plt.xticks(rotation = 'vertical')
-    ax.set_title("Feature importance of Random)'''
-########
-'''
-
-scoring = ['roc_auc', 'accuracy']#
-r_multi = permutation_importance(
-    ETCV, X_test, Y_test, n_repeats=30, random_state=0, scoring=scoring)
-
-features= list(twitter.columns)[6:-2]
-roc_auc_importance = []
-roc_auc_std = []
-acc_importance =[]
-acc_std=[]
-for metric in r_multi:
-    print(f"{metric}")
-    r = r_multi[metric]
-    for i in range(len(features)):
-        #if r.importances_mean[i] - 2 * r.importances_std[i] > 0: ## do we want to know this?
-        print(i,f"    {list(twitter.columns)[6:-2][i]:<8}"
-              f"{r.importances_mean[i]:.3f}"
-              f" +/- {r.importances_std[i]:.3f}")
-        if metric == 'roc_auc':
-            roc_auc_importance.append(r.importances_mean[i])
-            roc_auc_std.append(r.importances_std[i])
-        if metric == 'accuracy': 
-            acc_importance.append(r.importances_mean[i])
-            acc_std.append(r.importances_std[i])
-
-
-d = {'features': features, 'acc_importance': acc_importance, 'roc_auc_importance': roc_auc_importance}
-acc_importance_df = pd.DataFrame(d)
-
-
-plt.figure(figsize=(15, 4))# this adjusts how far away the plots are from eachother
-
-ax = plt.subplot(121)
-
-acc_importance_df = acc_importance_df.sort_values(by = 'acc_importance')
-acc_importance_df.plot(x = 'features', y ='acc_importance', kind = 'bar',ax = ax)
-plt.xticks(rotation = 'vertical')
-ax.set_title("Feature importance of Random Forest based on accuracy")
-ax.set_ylabel("permutation importance")
-
-ax = plt.subplot(122)
-acc_importance_df = acc_importance_df.sort_values(by = 'roc_auc_importance')
-acc_importance_df.plot(x = 'features', y ='roc_auc_importance', kind = 'bar', ax =ax)
-plt.xticks(rotation = 'vertical')
-ax.set_title("Feature importance of Random Forest based on roc_auc")
-ax.set_ylabel("permutation importance")
-
-'''
-
-'''
-# In[ ]:
-
-
-#source: https://stackoverflow.com/questions/50201913/using-scikit-learn-to-determine-feature-importances-per-class-in-a-rf-model
-
-## we first need to make a regular model with the best params that were found.
-
-
-
-
-## feature importance for each candidate 
-
-importances = ET.feature_importances_
-std = np.std([ET.feature_importances_ for tree in ET.estimators_],
-             axis=0)
-indices = np.argsort(importances)[::-1]
-feature_list = [X.columns[indices[f]] for f in range(X.shape[1])]  #names of features.
-ff = np.array(feature_list)
-
-print("Feature ranking:")
-
-for f in range(X.shape[1]):
-    print("%d. feature %d (%f) name: %s" % (f + 1, indices[f], importances[indices[f]], ff[indices[f]]))
-
-    
-plt.figure()
-plt.rcParams['figure.figsize'] = [16, 6]
-plt.title("Feature importances")
-plt.bar(range(X.shape[1]), importances[indices],
-       color="r", yerr=std[indices], align="center")
-plt.xticks(range(X.shape[1]), ff[indices], rotation=90)
-plt.xlim([-1, X.shape[1]])
-plt.show()
-
-def class_feature_importance(X, Y, feature_importances):
-    N, M = X.shape
-    X = scale(X)
-
-    out = {}
-    for c in set(Y):
-        out[c] = dict(
-            zip(range(M), np.mean(X[Y==c, :], axis=0)*feature_importances)
-        )
-
-    return out
-
-
-result = class_feature_importance(X_train, Y_train, importances)
-
-titles = ["Did not Divert", "Diverted"]
-for t, i in zip(titles, range(len(result))):
-    plt.figure()
-    plt.rcParams['figure.figsize'] = [16, 6]
-    plt.title(t)
-    plt.bar(range(len(result[i])), result[i].values(),
-           color="r", align="center")
-    plt.xticks(range(len(result[i])), ff[list(result[i].keys())], rotation=90)
-    plt.xlim([-1, len(result[i])])
+    pic_name = name+'_permutation_importance_'+data_name+".png"
+    plt.savefig(pic_name, format="png")
     plt.show()
 
-'''
+# In[ ]:
+def barchart(data, data_name): 
+    names= []
+    trump = []
+    hillary = []
+    for i in all_data_df.columns[6:-2]:
+        
+        #print(i)
+        names.append(i)
+        
+        dfH = data.loc[data['Candidate']=='HC',:]
+        n_rows = sum(dfH[i]!=0)
+        hillary.append(n_rows)
+        #print(n_rows)
+        #hillary = [x/len(dfH) for x in hillary]
+        #hillary = np.array(hillary)/len(dfH)
+    
+    
+        dfT =data.loc[data['Candidate']=='DT',:]
+        n_rows = sum(dfT[i]!=0)
+        trump.append(n_rows)
+        #print(n_rows)
+    names.pop(-2)
+    trump.pop(-2)
+    hillary.pop(-2)
+    trump = [x/len(dfT) for x in trump]
+    hillary = [x/len(dfH) for x in hillary]
+        #trump = np.array(trump)/len(dfT)
+    
+    
+    df = pd.DataFrame({"trump": trump, "hillary":hillary}, index = names)
+    df.plot.bar(rot=90, title = "fraction of media where each tactic was used")
+    print("data from " +data_name)
+    
+    return names, trump, hillary 
+
+
+
+def boxplotting(data):
+    data = data.replace(0,np.nan)
+    df1 =pd.melt(df0, id_vars = ["BCandidate", "Content_Category"], var_name = "propaganda techinique",
+        value_name = "times used")
+    sns.boxplot ( data = df1, x ="propaganda techinique", y = "times used", hue = "BCandidate")
+    plt.xticks(rotation = 90)
+
+
+
+
+
+
+
