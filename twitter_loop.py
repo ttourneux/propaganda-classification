@@ -35,7 +35,7 @@ def twitter_loop():
     data = twitter 
     data = functions.balance_data(data)
     
-    X = data.loc[:,'Loaded_Language':'Thought-terminating_Cliches',]
+    X = data.loc[:,"Num Prop":"Bandwagon,Reductio_ad_hitlerum",]
     Y = data.loc[:,"BCandidate"]
 
     X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size = .2,shuffle=True)
@@ -51,7 +51,7 @@ def twitter_loop():
         print(name + ': Done!')
 
     
-    SVM_LO_NN = ["support vector machine",'neural net']#'lasso', ## this cannot be used because it cannon predict by classification
+    SVM_LO_NN = ["support vector machine",'neural net','logistic regression']#'lasso', ## this cannot be used because it cannon predict by classification
     for name in SVM_LO_NN :
         model, param_grid = functions.choose_model(name)
         trained_model = functions.model_training(model,X_train, Y_train, param_grid)

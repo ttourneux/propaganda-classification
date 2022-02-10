@@ -54,10 +54,10 @@ from sklearn. preprocessing import scale
 
 
 def balance_data(data): 
-    dfH = data.loc[data['Candidate']=='HC',:]
+    dfH = data.loc[data['BCandidate']==0,:]
     print("HC length: ",len(dfH))
 
-    dfT =data.loc[data['Candidate']=='DT',:]
+    dfT =data.loc[data['BCandidate']==1,:]
     print("DT length: ",len(dfT))
     df_new = data
     A = len(dfT)
@@ -87,16 +87,17 @@ def balance_data(data):
 def choose_model(name):
     granularity = 1
     if name =="support vector machine" or name == 'SVM':
-
         model = SVC(gamma='auto') 
         param_grid = { 
             'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
             'C' : list(range(1,30, granularity))}
+        
     elif name == 'extra trees':
         model = ExtraTreesClassifier()   
         param_grid = {
             'n_estimators' : list(range(1,100,granularity)),# no real benefit from 1,100
             'random_state' : list(range(1,100,granularity))}
+        
     elif name == 'random forest':
         model = RandomForestClassifier()
         param_grid={ 
@@ -104,10 +105,13 @@ def choose_model(name):
             'max_depth': list(range(2,100,granularity)),
             'random_state': list(range(10,100,granularity))}
 
-    elif name == 'lasso':
-        model = Lasso()
+    elif name == 'logistic regression':
+        model = LogisticRegression(max_iter = 10000)
         param_grid={ 
-            'alpha' : list(np.arange (.1, 50, .1))}
+            'penalty' : ['l1', 'l2', 'elasticnet', 'none'],
+            'tol' : [1e-1,1e-2,1e-3,1e-4,1e-5,1e-6]
+            'C' : list(.1,range(1,30, granularity))}
+        
     elif name == 'neural net' or name == 'NN':
         model = MLPClassifier(max_iter=10000)
         param_grid={ 
@@ -115,6 +119,7 @@ def choose_model(name):
             'alpha' : [1e-5,1e-4,1e-3,1e-2],
             'activation': ['tanh', 'relu'],
             'learning_rate': ['constant','adaptive']}
+        
     else: 
         print("wrong name input")
         print("change granularity?")
