@@ -84,8 +84,7 @@ def balance_data(data):
 
 # In[3]:
 
-def choose_model(name):
-    granularity = 1
+def choose_model(name,granularity = 1):
     if name =="support vector machine" or name == 'SVM':
         model = SVC(gamma='auto') 
         param_grid = { 
@@ -103,20 +102,21 @@ def choose_model(name):
         param_grid={ 
             'n_estimators' : list(range(1,100,granularity)),
             'max_depth': list(range(2,100,granularity)),
+            'class_weight' : ['balanced','none']
             'random_state': list(range(10,100,granularity))}
 
     elif name == 'logistic regression':
         model = LogisticRegression(max_iter = 10000)
         param_grid={ 
-            'penalty' : ['l1', 'l2', 'elasticnet', 'none'],
-            'tol' : [1e-1,1e-2,1e-3,1e-4,1e-5,1e-6]
-            'C' : list(.1,range(1,30, granularity))}
+            'penalty' : ['l1', 'none'],
+            'tol' : [1e-1,1e-2,1e-3,1e-4,1e-5,1e-6],
+            'C' : list(range(1,30, granularity))}
         
     elif name == 'neural net' or name == 'NN':
-        model = MLPClassifier(max_iter=10000)
+        model = MLPClassifier(max_iter=100000)
         param_grid={ 
             'solver' : ['lbfgs', 'sgd', 'adam'],
-            'alpha' : [1e-5,1e-4,1e-3,1e-2],
+            'alpha' : [10,5,1,1e-5,1e-3,1e-10],## regularization
             'activation': ['tanh', 'relu'],
             'learning_rate': ['constant','adaptive']}
         
@@ -149,20 +149,21 @@ def save_model(model,name, data_name):
 
 def scorer(filename, X_test, Y_test ): 
     loaded_model = pickle.load(open("trained_models/"+filename, 'rb'))
-    print(filename+" results on test data")
+    print(filename+"Results on test data")
     print("roc_auc:",roc_auc_score(Y_test,loaded_model.predict(X_test)))
     print("accurarcy:",accuracy_score(Y_test,loaded_model.predict(X_test)))
     print("note 1 is Donald Trump")
     cm = confusion_matrix(Y_test,loaded_model.predict(X_test))
     ConfusionMatrixDisplay(cm).plot()
     
-    json_ptr = open("scores/scores.json")
+    json_ptr = open("scores/scores.json", 'r')
     scores = json.load(json_ptr)
-    scores["roc_auc"] = roc_auc_score(Y_test,loaded_model.predict(X_test))
-    scores["accurarcy"] = accuracy_score(Y_test,loaded_model.predict(X_test))
+    scores["roc_auc_"+filename] = roc_auc_score(Y_test,loaded_model.predict(X_test))
+    scores["accurarcy_"+filename] = accuracy_score(Y_test,loaded_model.predict(X_test))
     
-    json_ptr = open("scores/"+filename+".json", 'w')
-    json.dump(scores, json_ptr)
+    json_ptr = open("scores/scores.json", 'w')
+    json.dump(scores, json_ptr)## confirm that this is overwriting the old scores(I think it does).
+    ## consider pretty printing the json file 
     json_ptr.close()
     return loaded_model
 
@@ -286,12 +287,12 @@ def barchart(data, data_name):
     names= []
     trump = []
     hillary = []
-    for i in data.columns[6:-2]:
+    for i in data.columns[4:]:
         
         #print(i)
         names.append(i)
         
-        dfH = data.loc[data['Candidate']=='HC',:]
+        dfH = data.loc[data['BCandidate']==0,:]
         n_rows = sum(dfH[i]!=0)
         hillary.append(n_rows)
         #print(n_rows)
@@ -299,7 +300,7 @@ def barchart(data, data_name):
         #hillary = np.array(hillary)/len(dfH)
     
     
-        dfT =data.loc[data['Candidate']=='DT',:]
+        dfT =data.loc[data['BCandidate']==1,:]
         n_rows = sum(dfT[i]!=0)
         trump.append(n_rows)
         #print(n_rows)
@@ -312,19 +313,24 @@ def barchart(data, data_name):
     
     
     df = pd.DataFrame({"trump": trump, "hillary":hillary}, index = names)
-    df.plot.bar(rot=90, title = "fraction of media where each tactic was used")
+    df.plot.bar(rot=90, title = "fraction of media where each tactic was used in "+data_name)
     print("data from " +data_name)
     
     return names, trump, hillary 
 
 
-
-def boxplotting(data):
+## 
+def boxplotting(data, data_name):
     data = data.replace(0,np.nan)
-    df1 =pd.melt(data, id_vars = ["BCandidate", "Content_Category"], var_name = "propaganda techinique",
-        value_name = "times used")
-    sns.boxplot ( data = df1, x ="propaganda techinique", y = "times used", hue = "BCandidate")
+    df1 =pd.melt(data, id_vars = ["BCandidate", "Content_Category"],value_vars =data.columns[4:],  var_name = "propaganda techinique",value_name = "times used")
+    df1['BCandidate'] = df1["BCandidate"].replace(np.nan, 0)
+    print(sum(df1["BCandidate"]==0))
+    ##print(sum(df1[:,3]))
+    sns.boxplot ( data = df1, x ="propaganda techinique", y = "times used", hue = "BCandidate", showmeans = True, meanline = True, showfliers = False)
     plt.xticks(rotation = 90)
+    
+    plt.title("frequency with which each propaganda technique was used in " +data_name)## among documents where that prop tactic was used.    
+    plt.show()
 
 
 
