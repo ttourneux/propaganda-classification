@@ -63,18 +63,30 @@ def balance_data(data):
     A = len(dfT)
     B = len(dfH)
     
-    if B>A: 
-        print('look at function "balance_data"')
-    missing_rows = A-B
-    row_fraction = missing_rows/B
-    print('missing_rows:', missing_rows, 'row_fraction:', row_fraction) 
-    for i in range(0,math.floor(row_fraction),1):
-        print('data repeat',i)
-        df_new = df_new.append(dfH)
+    if B>A: ## more hillary data
+        ##print('look at function "balance_data"')
+        missing_rows = B-A
+        row_fraction = missing_rows/A
+        print('missing_rows:', missing_rows, 'row_fraction:', row_fraction) 
+        for i in range(0,math.floor(row_fraction),1):
+            print('data repeat',i)
+            df_new = df_new.append(dfT)
+        leftover = row_fraction - math.floor(row_fraction)
+        df_new = df_new.append(dfT[:math.floor(len(dfT)*leftover)])
         
-    leftover = row_fraction - math.floor(row_fraction)
-    df_new = df_new.append(dfH[:math.floor(len(dfH)*leftover)])
+        
+    else:## more trump data
+        missing_rows = A-B
+        row_fraction = missing_rows/B
+        print('missing_rows:', missing_rows, 'row_fraction:', row_fraction) 
+        for i in range(0,math.floor(row_fraction),1):
+            print('data repeat',i)
+            df_new = df_new.append(dfH)
+		
+        leftover = row_fraction - math.floor(row_fraction)
+        df_new = df_new.append(dfH[:math.floor(len(dfH)*leftover)])
 
+    dfT =df_new.loc[df_new['BCandidate']==1,:]## need to recalculate how many trump entries there are
     print("DT length ratio: ",len(dfT)/len(df_new))
     
     data = df_new
@@ -94,23 +106,25 @@ def choose_model(name,granularity = 1):
     elif name == 'extra trees':
         model = ExtraTreesClassifier()   
         param_grid = {
-            'n_estimators' : list(range(1,100,granularity)),# no real benefit from 1,100
-            'random_state' : list(range(1,100,granularity))}
+            'n_estimators' : list(range(1,100,2*granularity)),# no real benefit from 1,100
+            'random_state' : list(range(1,100,2*granularity))}
         
     elif name == 'random forest':
         model = RandomForestClassifier()
         param_grid={ 
-            'n_estimators' : list(range(1,100,granularity)),
-            'max_depth': list(range(2,100,granularity)),
-            'class_weight' : ['balanced','none']
-            'random_state': list(range(10,100,granularity))}
+            'n_estimators' : list(range(1,100,2*granularity)),
+            'max_depth': list(range(2,100,2*granularity)),
+            
+            'random_state': list(range(10,100,2*granularity))}
 
     elif name == 'logistic regression':
-        model = LogisticRegression(max_iter = 10000)
+        model = LogisticRegression(max_iter = 10000, solver = 'saga')## this solver supports all the different types of 
         param_grid={ 
-            'penalty' : ['l1', 'none'],
-            'tol' : [1e-1,1e-2,1e-3,1e-4,1e-5,1e-6],
-            'C' : list(range(1,30, granularity))}
+            'penalty' : ['l1', 'l2', 'none'],
+            'class_weight' : ['balanced','none'],
+            'tol' : [1e-4,1e-2,1e-6],
+            'C' : [math.log(x*.1+1.00000001) for x in range(0,30,granularity)]#list(range(1,30, granularity))}## inverse of regularization strength
+            }
         
     elif name == 'neural net' or name == 'NN':
         model = MLPClassifier(max_iter=100000)
@@ -332,7 +346,13 @@ def boxplotting(data, data_name):
     plt.title("frequency with which each propaganda technique was used in " +data_name)## among documents where that prop tactic was used.    
     plt.show()
 
-
+def plot_accuracy(data):
+    acc_arr = np.array([ [k,v] for k,v in data.items() if 'acc' in k])
+    plt.bar(list(acc_arr[:,0]),list(acc_arr[:,1]),bottom = 0)
+    plt.xticks(rotation = 90)
+    plt.title("accuracy per model-data pair")
+    print(tabulate(acc_arr))
+    plt.show()
 
 
 
