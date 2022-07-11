@@ -7,11 +7,28 @@ import pprint
 
 from tabulate import tabulate 
 
-fp = open('scores/scores.json')
-data = json.load(fp)
 
 
-def plot_accuracy(data):
+
+def plot_accuracy():
+    '''
+    input: 
+    data_name(string): can take values "twitter" or "all_data" or "non_twitter"
+    
+    return: 
+    NA
+    
+    to be changed:
+    the file path on line 27 could be changed to graph different scores
+    
+    '''
+
+
+    fp = open('scores/scores.json')
+    data = json.load(fp)
+    ## not sure if this^ should go in or out of the function
+         ## it just seems unlikely we would want to change the score file path each time we run it.
+    
     acc_arr = np.array([ [k,float(v)] for k,v in data.items() if 'acc' in k])
     
     acc_arr = pd.DataFrame(acc_arr, columns=["model","acc"]).sort_values(by='acc')
@@ -42,4 +59,5 @@ def plot_accuracy(data):
     plt.show()
 '''    
     
-plot_accuracy(data)
+    
+plot_accuracy()

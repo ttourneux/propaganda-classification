@@ -29,7 +29,7 @@ def twitter_loop():
     DS = datasets.Datasets()
     tweets = DS.tweets_df
     retweets = DS.retweets_df
-    twitter = tweets.append(retweets)
+    twitter = tweets.append(retweets)## all tweets and retweets
     data_name = "twitter"## to be changed
     
     data = twitter 

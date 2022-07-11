@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 # In[3]:
 
 
-def twitter_loop():
+def all_data_loop():
     DS = datasets.Datasets()
     all_data = DS.all_data_df
     data_name = "all_data"## to be changed
@@ -42,4 +42,4 @@ def twitter_loop():
     #functions.boxplotting(data)
     
         
-twitter_loop()
+all_data_loop()

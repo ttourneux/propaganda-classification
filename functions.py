@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # In[1]:
-
+import datasets
 
 import math
 import numpy as np
@@ -52,8 +52,56 @@ from sklearn. preprocessing import scale
 
 # In[2]:
 
+def get_data(data_name):
+
+    '''
+    input: 
+    data_name(string): can take values "twitter" or "all_data" or "non_twitter" representing which data should be retrieved
+
+    return: 
+    data(pd.DataFrame()): this is a dataframe of the specified data 
+    
+    to be changed: NA 
+    
+    '''
+
+    DS = datasets.Datasets()
+
+    if data_name == "twitter": 
+        
+        tweets = DS.tweets_df
+        retweets = DS.retweets_df
+        twitter = tweets.append(retweets)## all tweets and retweets
+        data = twitter 
+        
+    elif data_name =="non_twitter":
+        data = DS.non_twitter_df
+        #data = non_twitter
+        
+    elif data_name == 'all_data':
+        
+        data = DS.all_data_df
+        
+    else:
+        print("something went wrong")
+        
+        
+    return data
+
+
+
 
 def balance_data(data): 
+    '''
+    input: 
+    data(pd.DataFrame()): data that has different number of rows corresponding to Trump than Hillary
+
+    return: 
+    data(pd.DataFrame()): data that has the same number of rows for Trump and Hillary
+    
+    to be changed: NA 
+    
+    '''
     dfH = data.loc[data['BCandidate']==0,:]
     print("HC length: ",len(dfH))
 
@@ -97,6 +145,19 @@ def balance_data(data):
 # In[3]:
 
 def choose_model(name,granularity = 1):
+    '''
+    input: 
+    name(string): the name of the model that should be returned
+    granularity(positive int): a parameter that allows for smaller gridsearches as it is increased
+
+    return: 
+    model(model class): model containing inital parameters
+    param_grid(dictionary): a dictionary containing the hyperparameters and the values that should be tried
+    
+    to be changed: NA 
+    
+    '''
+    
     if name =="support vector machine" or name == 'SVM':
         model = SVC(gamma='auto') 
         param_grid = { 

@@ -49,5 +49,8 @@ for i in range(len(features_to_select)):
     model, param_grid = functions.choose_model(models[i])
     trained_model = functions.model_training(model,new_X_train, Y_train, param_grid)
     #trained_model = model.fit(new_X_train, Y_train)
-    filename = functions.save_model(trained_model,name,data_name)
+    filename = functions.save_model(trained_model,models[i],data_name)
     loaded_model = functions.scorer(filename, new_X_test, Y_test)
+    
+    
+    
