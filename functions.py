@@ -49,6 +49,11 @@ from sklearn.inspection import permutation_importance
 
 from sklearn. preprocessing import scale
 
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.pipeline import Pipeline
+
+
 
 # In[2]:
 
@@ -161,56 +166,94 @@ def choose_model(name,granularity = 1):
     if name =="support vector machine" or name == 'SVM':
         model = SVC(gamma='auto') 
         param_grid = { 
-            'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
-            'C' : list(range(1,30, granularity))}
+            name + '__'+'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
+            name + '__'+'C' : list(range(1,30, granularity))}
         
     elif name == 'extra trees':
         model = ExtraTreesClassifier()   
         param_grid = {
-            'n_estimators' : list(range(1,100,2*granularity)),# no real benefit from 1,100
-            'random_state' : list(range(1,100,2*granularity))}
+            name + '__'+'n_estimators' : list(range(1,100,2*granularity)),# no real benefit from 1,100
+            name + '__'+'random_state' : list(range(1,100,2*granularity))}
         
     elif name == 'random forest':
         model = RandomForestClassifier()
         param_grid={ 
-            'n_estimators' : list(range(1,100,2*granularity)),
-            'max_depth': list(range(2,100,2*granularity)),
+            name + '__'+'n_estimators' : list(range(1,100,2*granularity)),
+            name + '__'+'max_depth': list(range(2,100,2*granularity)),
             
-            'random_state': list(range(10,100,2*granularity))}
+            name + '__'+'random_state': list(range(10,100,2*granularity))}
 
     elif name == 'logistic regression':
         model = LogisticRegression(max_iter = 10000, solver = 'saga')## this solver supports all the different types of 
         param_grid={ 
-            'penalty' : ['l1', 'l2', 'none'],
-            'class_weight' : ['balanced','none'],
-            'tol' : [1e-4,1e-2,1e-6],
-            'C' : [math.log(x*.1+1.00000001) for x in range(0,30,granularity)]#list(range(1,30, granularity))}## inverse of regularization strength
+            name + '__'+'penalty' : ['l1', 'l2', 'none'],
+            name + '__'+'class_weight' : ['balanced','none'],
+            name + '__'+'tol' : [1e-4,1e-2,1e-6],
+            name + '__'+'C' : [math.log(x*.1+1.00000001) for x in range(0,30,granularity)]#list(range(1,30, granularity))}## inverse of regularization strength
             }
         
     elif name == 'neural net' or name == 'NN':
         model = MLPClassifier(max_iter=100000)
         param_grid={ 
-            'solver' : ['lbfgs', 'sgd', 'adam'],
-            'alpha' : [10,5,1,1e-5,1e-3,1e-10],## regularization
-            'activation': ['tanh', 'relu'],
-            'learning_rate': ['constant','adaptive']}
+            name + '__'+'solver' : ['lbfgs', 'sgd', 'adam'],
+            name + '__'+'alpha' : [10,5,1,1e-5,1e-3,1e-10],## regularization
+            name + '__'+'activation': ['tanh', 'relu'],
+            name + '__'+'learning_rate': ['constant','adaptive']}
         
     else: 
         print("wrong name input")
         print("change granularity?")
+        
+        
+        
+    
     return model, param_grid
 
 
 
-def model_training (model, X_train,Y_train,param_grid): 
+def model_training (name, model, X_train,Y_train,param_grid):
+
+    param_grid["sfs__n_features_to_select"] = list(range(1,len(X_train.columns)-1)) 
+
+    sfs = SequentialFeatureSelector(model)
+    
+    make_pipeline(sfs,model)
+    pipe = Pipeline([('sfs',sfs),(name,model)])
+
+
     CVM = GridSearchCV(
-        model, param_grid = param_grid,n_jobs = -1)
+        pipe, param_grid = param_grid,n_jobs = -1, verbose = True, scoring = 'accuracy')## note, refit = True by default and thus will "return" the best model ie our predict and such works as if we were using a model with the best hyperparameters.
 
     CVM.fit(X_train,Y_train)
     return CVM
 
 
 # In[4]:
+
+
+def graph_best_with_n_features(name,fitted_model, data_name):
+    df_cv_scores=pd.DataFrame(fitted_model.cv_results_).sort_values(by='rank_test_score')
+    scores = df_cv_scores.loc[:,["mean_test_score","param_sequentialfeatureselector__n_features_to_select"]]
+    n_feat_list = scores.loc[:,'param_sequentialfeatureselector__n_features_to_select'].unique()
+
+    feat_n = {}
+
+    for i in n_feat_list:
+        #print(i)
+        Maximum = scores.loc[scores.loc[:,"param_sequentialfeatureselector__n_features_to_select"]==i,:].max()[0]
+        feat_n[i] = [Maximum]
+    #feat_n   
+    df = pd.DataFrame(feat_n)
+    df = df.transpose()
+    #print(df)
+    #print(list(df.columns))
+    df.plot(kind = 'bar')
+    plt.xticks(rotation = 0)
+    plt.yticks(np.arange(.5,.75,.05))
+    plt.ylim(bottom = .5)
+    plt.title("accuracy per model-data pair")
+    plt.savefig("figures/"+data_name+'_'+ name + '_n_feat.png')
+    plt.show()
 
 
 def save_model(model,name, data_name):
