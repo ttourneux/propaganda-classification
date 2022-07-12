@@ -13,16 +13,20 @@ import pandas as pd
 ## load dataset 
 
 
-mainDf = pd.read_csv(r'classifier_training_data (1).csv')
+#mainDf = pd.read_csv(r'classifier_training_data (1).csv')
+mainDf = pd.read_csv(r'data/inital_BERT_output.csv')
 
-kaggleDf = pd.read_csv(r'classifier_training_data (2).csv')
+
+#kaggleDf = pd.read_csv(r'classifier_training_data (2).csv')
+kaggleDf = pd.read_csv(r'data/kaggle_BERT_output.csv')
+
 
 #df.head(5)
 
 
 # In[3]:
 
-
+## 0 instances of propaganda where there is no data
 kaggleDf = kaggleDf.fillna(0)
 mainDf = mainDf.fillna(0)
 
@@ -31,7 +35,7 @@ mainDf = mainDf.fillna(0)
 
 
 kaggleDf = kaggleDf.assign(Content_Category=lambda Candidate	: 'tweet')
-
+## all data from kaggle is a tweet
 
 # In[5]:
 
@@ -54,7 +58,7 @@ kaggleDf
 
 everythingDf =everythingDf.assign(
     BCandidate = lambda dataframe : dataframe['Candidate'].map(lambda Candidate: 1 if Candidate == "DT" else 0)
-)
+)## we want to make two numerical categories
 everythingDf
 
 
@@ -124,4 +128,5 @@ class Datasets:
     self.retweets_df =  everythingDf.loc[everythingDf['Content_Category']=='retweet',:]
     self.non_twitter_df = nonTwitterDf
     self.all_data_df = everythingDf
+print("done collecting data")
 

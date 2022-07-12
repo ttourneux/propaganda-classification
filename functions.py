@@ -251,7 +251,7 @@ def graph_best_with_n_features(name,fitted_model, data_name):
     plt.xticks(rotation = 0)
     plt.yticks(np.arange(.5,.75,.05))
     plt.ylim(bottom = .5)
-    plt.title("accuracy per model-data pair")
+    plt.title(data_name+'_'+ name +"accuracy per model-data pair")
     plt.savefig("figures/"+data_name+'_'+ name + '_n_feat.png')
     plt.show()
 
