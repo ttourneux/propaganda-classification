@@ -1,5 +1,5 @@
 import functions
-import datasets
+import datasets## this is no longer used but allows easy acess to the datasets
 from sklearn.model_selection import train_test_split
 
 
@@ -38,9 +38,11 @@ def data_loop(data_name):
     for name in model_names:
         model, param_grid = functions.choose_model(name)
         trained_model = functions.model_training(name,model,X_train, Y_train, param_grid)
-        graph_best_with_n_features(name,fitted_model, data_name)
+        ## always save the model right after you train it!! 
         filename = functions.save_model(trained_model,name,data_name)
-        loaded_model = functions.scorer(filename, X_test, Y_test)   
+        functions.graph_best_with_n_features(name,trained_model, data_name)
+        loaded_model = functions.scorer(filename, X_test, Y_test)  
+        ## loaded_model is returned in case it could be used for something afterwards. also allows for scorer to return the loaded_model 
     '''if name in ['extra trees', 'random forest']:
         functions.graph_MDI_importance(X_train,Y_train,
         loaded_model,name, data_name)

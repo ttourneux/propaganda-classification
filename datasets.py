@@ -74,14 +74,16 @@ everythingDf
 # In[9]:
 
 
-everythingDf = pd.DataFrame(everythingDf.groupby(["File Name", "BCandidate", "Content_Category"], as_index = False).sum())
-everythingDf["File Name"]
-
+everythingDf = pd.DataFrame(everythingDf.groupby(["File Name", "BCandidate", "Content_Category"], as_index = False).sum())## we combine instances of propaganda(rows) together by filename (grouping propaganda by complete input file)
+#everythingDf["File Name"]
+assert(len(everythingDf["File Name"].unique()) == len(everythingDf["File Name"]))
 
 # In[10]:
 
-
+assert(len(kaggleDf['Sentence'].unique()) == len(kaggleDf['Sentence']))
+## make sure each sentance/tweet is grouped together as above.
 everythingDf = everythingDf.append(kaggleDf)
+## each row is a tweet 
 
 
 # In[11]:

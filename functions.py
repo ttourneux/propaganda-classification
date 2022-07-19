@@ -10,7 +10,7 @@ import scipy
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import sklearn as skl
+#import sklearn as skl
 import io
 import pickle
 import json
@@ -24,17 +24,16 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.naive_bayes import GaussianNB
+#from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyRegressor
@@ -53,7 +52,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.pipeline import Pipeline
 
-
+from tabulate import tabulate
 
 # In[2]:
 
@@ -167,45 +166,73 @@ def choose_model(name,granularity = 1):
         model = SVC(gamma='auto') 
         param_grid = { 
             name + '__'+'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
-            name + '__'+'C' : list(range(1,30, granularity))}
+            name + '__'+'C' : [1/100,1/10,1,10,100,100]}# list(range(1,30, granularity)) 
         
     elif name == 'extra trees':
         model = ExtraTreesClassifier()   
         param_grid = {
-            name + '__'+'n_estimators' : list(range(1,100,2*granularity)),# no real benefit from 1,100
-            name + '__'+'random_state' : list(range(1,100,2*granularity))}
+            name + '__' + 'max_leaf_nodes' : [10,100,1000,10000],
+        
+            #name + '__'+'n_estimators' : list(range(1,100,2*granularity)),
+            name + '__'+'max_depth': list(range(2,100,2*granularity))
+            
+            }
         
     elif name == 'random forest':
         model = RandomForestClassifier()
         param_grid={ 
-            name + '__'+'n_estimators' : list(range(1,100,2*granularity)),
-            name + '__'+'max_depth': list(range(2,100,2*granularity)),
+            name + '__' + 'max_leaf_nodes' : [10,100,1000,10000],
+        
+            #name + '__'+'n_estimators' : list(range(1,100,2*granularity)),
+            name + '__'+'max_depth': list(range(2,100,2*granularity))
             
-            name + '__'+'random_state': list(range(10,100,2*granularity))}
-
-    elif name == 'logistic regression':
-        model = LogisticRegression(max_iter = 10000, solver = 'saga')## this solver supports all the different types of 
-        param_grid={ 
-            name + '__'+'penalty' : ['l1', 'l2', 'none'],
-            name + '__'+'class_weight' : ['balanced','none'],
-            name + '__'+'tol' : [1e-4,1e-2,1e-6],
-            name + '__'+'C' : [math.log(x*.1+1.00000001) for x in range(0,30,granularity)]#list(range(1,30, granularity))}## inverse of regularization strength
+            #name + '__'+'random_state': list(range(10,100,2*granularity))
             }
+        ## here max depth and max leaf nodes should also be searched 
+    elif name == 'logistic regression':
+        model = SGDClassifier(early_stopping = True, max_itter = 1e6)
+        
+        param_grid = {
+            name + '__' +'loss' : ['log_loss', 'hinge'] ,## logistic regression, svm with sgd
+            name + '__' +'alpha' : [1/100,1/10,1,10,100,100],
+            name + '__' +'learning_rate' : ['optimal','adaptive']
+            
+            
+        }
+        ## SGD is used instead of LogisticRegression because I think that is the how we want to optimize
+        '''model = LogisticRegression(class_weight = 'balanced',
+            solver = 'saga',
+            penalty = 'l2')## this solver supports all the different types of 
+        param_grid={ 
+            #name + '__'+'penalty' : ['l2'],#'l1', 'none' 
+             
+             ## always use balanced when it is a parameter. 
+            name + '__'+'max_itters' : [1e-4,1e-2,1e-6],
+ 
+            
+            name + '__'+'C' : [1/100,1/10,1,10,100,100] for x in range(0,30,granularity)]#list(range(1,30, granularity))}## inverse of regularization strength
+            #log1.100001 , log(1.2000001)... log(3.10000000....1)  
+            #try 1/100 to 1000 by multiples of 10.( orders of magnitude. 
+            }'''
         
     elif name == 'neural net' or name == 'NN':
-        model = MLPClassifier(max_iter=100000)
+        model = MLPClassifier(max_iter=1e6, learning_rate = 'adaptive')
         param_grid={ 
-            name + '__'+'solver' : ['lbfgs', 'sgd', 'adam'],
-            name + '__'+'alpha' : [10,5,1,1e-5,1e-3,1e-10],## regularization
-            name + '__'+'activation': ['tanh', 'relu'],
-            name + '__'+'learning_rate': ['constant','adaptive']}
+           ### early stopping parameter so we can use that. 
+        
+            name + '__'+'solver' : [ 'adam'],## one solver is fine 'lbfgs', 'sgd',
+            name + '__'+'alpha' : [1/100,1/10,1,10,100,100],## regularization
+            name + '__'+'activation': ['tanh', 'relu']
+            #name + '__'+'learning_rate': ['adaptive']# no need for constant.
+            } 
         
     else: 
         print("wrong name input")
         print("change granularity?")
         
         
-        
+    filename = "untitled_model"
+    pickle.dump(model, open("trained_models/"+filename, 'wb'))    
     
     return model, param_grid
 

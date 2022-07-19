@@ -6,13 +6,17 @@
 ## data flow
 
 ### input for BERT
-- hillary_trump_tweets.csv 
+- hillary_trump_tweets.csv (should be called: kaggle_BERT_input)
     - this was collected from kaggle at https://www.kaggle.com/datasets/benhamner/clinton-trump-tweets in December 2021
+    - not needed for the data/classification
 
 - HC_data.csv and DT_data.csv
+    - BERT input
     - written text data from Hillary Clinton and Donald Trump respectively
-    - the original non-edit text can be found in the 
+    - the original non-edit text can be found in the ...
     - the "CONTENT" column will have the data for every type of file 
+    
+- kaggle_BERT_input (was :hillary_trump_tweets.csv)
 
 ### input for classifcation/output from BERT
 
