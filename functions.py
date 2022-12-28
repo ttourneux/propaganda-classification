@@ -231,8 +231,9 @@ def choose_model(name,granularity = 1):
         print("change granularity?")
         
         
-    filename = "untitled_model"
-    pickle.dump(model, open("trained_models/"+filename, 'wb'))    
+    #filename = "untitled_model"
+    #pickle.dump(model, open("trained_models/"+filename, 'wb')) 
+    # I think it's dumb just to save one model as untitled_model
     
     return model, param_grid
 
@@ -258,16 +259,19 @@ def model_training (name, model, X_train,Y_train,param_grid):
 # In[4]:
 
 
-def graph_best_with_n_features(name,fitted_model, data_name):
+def graph_best_with_n_features(name,filename, data_name):
+    loaded_model = pickle.load(open("trained_models/"+filename, 'rb'))
+    fitted_model = loaded_model
+    
     df_cv_scores=pd.DataFrame(fitted_model.cv_results_).sort_values(by='rank_test_score')
-    scores = df_cv_scores.loc[:,["mean_test_score","param_sequentialfeatureselector__n_features_to_select"]]
-    n_feat_list = scores.loc[:,'param_sequentialfeatureselector__n_features_to_select'].unique()
+    scores = df_cv_scores.loc[:,["mean_test_score",'param_sfs__n_features_to_select']]
+    n_feat_list = scores.loc[:,'param_sfs__n_features_to_select'].unique()
 
     feat_n = {}
 
     for i in n_feat_list:
         #print(i)
-        Maximum = scores.loc[scores.loc[:,"param_sequentialfeatureselector__n_features_to_select"]==i,:].max()[0]
+        Maximum = scores.loc[scores.loc[:,'param_sfs__n_features_to_select']==i,:].max()[0]
         feat_n[i] = [Maximum]
     #feat_n   
     df = pd.DataFrame(feat_n)
@@ -278,7 +282,7 @@ def graph_best_with_n_features(name,fitted_model, data_name):
     plt.xticks(rotation = 0)
     plt.yticks(np.arange(.5,.75,.05))
     plt.ylim(bottom = .5)
-    plt.title(data_name+'_'+ name +"accuracy per model-data pair")
+    plt.title(data_name+'_'+ name +" accuracy per model-data pair")
     plt.savefig("figures/"+data_name+'_'+ name + '_n_feat.png')
     plt.show()
 

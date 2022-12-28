@@ -2,6 +2,8 @@
 
 echo 'hello' 
 
+
+
 python3 $1
 
 

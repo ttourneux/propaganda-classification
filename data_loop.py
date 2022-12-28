@@ -40,7 +40,7 @@ def data_loop(data_name):
         trained_model = functions.model_training(name,model,X_train, Y_train, param_grid)
         ## always save the model right after you train it!! 
         filename = functions.save_model(trained_model,name,data_name)
-        functions.graph_best_with_n_features(name,trained_model, data_name)
+        functions.graph_best_with_n_features(name,filename, data_name)
         loaded_model = functions.scorer(filename, X_test, Y_test)  
         ## loaded_model is returned in case it could be used for something afterwards. also allows for scorer to return the loaded_model 
     '''if name in ['extra trees', 'random forest']:
